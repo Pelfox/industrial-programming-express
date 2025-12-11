@@ -1,0 +1,32 @@
+{
+  "name": "industrial-programming-express",
+  "version": "1.0.0",
+  "packageManager": "pnpm@10.25.0",
+  "description": "",
+  "author": "",
+  "license": "ISC",
+  "keywords": [],
+  "main": "dist/index.js",
+  "scripts": {
+    "lint": "eslint . --ext .ts,.js",
+    "lint:fix": "eslint . --ext .ts,.js --fix",
+    "format": "prettier --write .",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "nodemon --watch src --exec ts-node src/index.ts"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^6.6.1",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.0",
+    "eslint": "^9.39.1",
+    "eslint-plugin-format": "^1.1.0",
+    "nodemon": "^3.1.11",
+    "prettier": "^3.7.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
