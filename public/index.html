@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Галерея изображений API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen">
+    <header class="max-w-4xl mx-auto px-4 pt-10 pb-6">
+      <h1 class="text-2xl font-semibold">Галерея изображений API</h1>
+      <p class="text-sm text-neutral-500 mt-1">Создание, просмотр и удаление записей с URL.</p>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 pb-16 space-y-6">
+      <section class="border border-neutral-200 rounded-xl p-4">
+        <h2 class="text-lg font-semibold mb-3">Создать запись</h2>
+        <form id="create-form" class="space-y-3">
+          <label class="block space-y-1">
+            <span class="text-sm text-neutral-800">URL *</span>
+            <input
+              name="url"
+              type="url"
+              required
+              placeholder="https://example.com/image.jpg"
+              class="w-full rounded-lg bg-transparent border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+            />
+          </label>
+          <label class="block space-y-1">
+            <span class="text-sm text-neutral-800">Имя (опционально)</span>
+            <input
+              name="name"
+              type="text"
+              placeholder="Моё изображение"
+              class="w-full rounded-lg bg-transparent border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 transition-all"
+            />
+          </label>
+          <button
+            type="submit"
+            class="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all"
+          >
+            Создать
+          </button>
+          <div id="create-message" class="hidden text-sm rounded-lg px-3 py-2"></div>
+        </form>
+      </section>
+
+      <section class="border border-neutral-200 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold">Список изображений</h2>
+          <button
+            id="refresh-btn"
+            type="button"
+            class="rounded-lg border border-neutral-200 px-3 py-2 text-sm hover:border-neutral-400 transition-all"
+          >
+            Обновить
+          </button>
+        </div>
+        <div id="list" class="space-y-2"></div>
+      </section>
+    </main>
+
+    <script>
+      const listEl = document.getElementById('list');
+      const form = document.getElementById('create-form');
+      const messageEl = document.getElementById('create-message');
+      const refreshBtn = document.getElementById('refresh-btn');
+
+      const api = {
+        async list() {
+          const res = await fetch('/images');
+          if (!res.ok) throw new Error('Не удалось получить список');
+          return res.json();
+        },
+        async create(payload) {
+          const res = await fetch('/images', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          if (!res.ok) {
+            const data = await res.json().catch(() => ({}));
+            throw new Error(data.error || 'Не удалось создать запись');
+          }
+          return res.json();
+        },
+        async remove(id) {
+          const res = await fetch(`/images/${encodeURIComponent(id)}`, { method: 'DELETE' });
+          if (res.status === 404) throw new Error('Запись не найдена');
+          if (!res.ok) throw new Error('Не удалось удалить запись');
+        },
+      };
+
+      function showMessage(text, type = 'success') {
+        messageEl.textContent = text;
+        messageEl.className = `text-sm rounded-lg px-3 py-2 ${type === 'success' ? 'border rounded-lg border-green-500' : 'border rounded-lg border-red-500'}`;
+        messageEl.classList.remove('hidden');
+        setTimeout(() => messageEl.classList.add('hidden'), 2500);
+      }
+
+      function createItem(record) {
+        const div = document.createElement('div');
+        div.className = 'border border-neutral-300 rounded-lg p-3 flex flex-col gap-2';
+        div.innerHTML = `
+        <div class="flex items-center justify-between gap-2">
+          <div class="text-sm font-medium">${record.name || 'Без имени'}</div>
+          <span class="text-xs px-2 py-1 rounded-full border border-neutral-300 text-neutral-400">${record.id}</span>
+        </div>
+        <div class="text-xs text-neutral-400 break-all">URL: <a class="text-blue-800 hover:underline" href="${record.url}" target="_blank" rel="noreferrer">${record.url}</a></div>
+        <div class="text-xs text-neutral-400">Создано: ${new Date(record.createdAt).toLocaleString()}</div>
+        <div>
+          <button type="button" class="delete-btn text-xs rounded-md px-3 py-1 bg-red-500 text-white hover:bg-red-400 transition-all" data-id="${record.id}">
+            Удалить
+          </button>
+        </div>
+      `;
+        div.querySelector('.delete-btn').addEventListener('click', async (e) => {
+          const btn = e.currentTarget;
+          btn.disabled = true;
+          btn.textContent = 'Удаление...';
+          try {
+            await api.remove(record.id);
+            await renderList();
+          } catch (err) {
+            alert(err.message);
+            btn.disabled = false;
+            btn.textContent = 'Удалить';
+          }
+        });
+        return div;
+      }
+
+      async function renderList() {
+        listEl.innerHTML = '<div class="text-sm text-neutral-600">Загрузка...</div>';
+        try {
+          const items = await api.list();
+          if (!items.length) {
+            listEl.innerHTML =
+              '<div class="text-sm text-neutral-600 border border-dashed border-neutral-200 rounded-lg p-3 text-center">Нет записей</div>';
+            return;
+          }
+          listEl.innerHTML = '';
+          items.forEach((item) => listEl.appendChild(createItem(item)));
+        } catch (err) {
+          listEl.innerHTML = `<div class="text-sm border border-red-500 rounded-lg p-3">${err.message}</div>`;
+        }
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const url = formData.get('url');
+        const name = formData.get('name');
+        try {
+          await api.create({ url, name });
+          showMessage('Создано', 'success');
+          form.reset();
+          await renderList();
+        } catch (err) {
+          showMessage(err.message, 'error');
+        }
+      });
+
+      refreshBtn.addEventListener('click', renderList);
+
+      renderList();
+    </script>
+  </body>
+</html>

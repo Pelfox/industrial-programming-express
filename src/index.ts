@@ -5,6 +5,7 @@ import { InMemoryImageStorage } from './storage';
 
 const app = express();
 app.use(express.json());
+app.use(express.static('public'));
 
 const storage = new InMemoryImageStorage();
 const imageService = new ImageService(storage);
