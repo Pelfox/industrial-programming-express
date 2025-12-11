@@ -17,6 +17,5 @@ app.delete('/images/:id', imageController.delete);
 
 const port = 8000;
 app.listen(port, () => {
-  // eslint-disable-next-line no-console
   console.log(`Server running at http://localhost:${port}`);
 });

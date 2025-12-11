@@ -13,18 +13,22 @@ export class ImageService {
       createdAt: new Date().toISOString(),
     };
 
+    console.debug('[ImageService] Storing an image', { id: record.id, url: record.url });
     return this.storage.create(record);
   }
 
   async listImages(): Promise<ImageRecord[]> {
+    console.debug('[ImageService] Listing all images');
     return this.storage.list();
   }
 
   async getImage(id: string): Promise<ImageRecord | null> {
+    console.debug('[ImageService] Fetching image', { id });
     return this.storage.getById(id);
   }
 
   async deleteImage(id: string): Promise<boolean> {
+    console.debug('[ImageService] Deleting image', { id });
     return this.storage.deleteById(id);
   }
 }
