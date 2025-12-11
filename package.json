@@ -1,11 +1,11 @@
 {
   "name": "industrial-programming-express",
   "version": "1.0.0",
+  "private": true,
   "packageManager": "pnpm@10.25.0",
-  "description": "",
-  "author": "",
-  "license": "ISC",
-  "keywords": [],
+  "description": "🌄 API для простейшей галереи изображений.",
+  "author": "Aleksey Demchenkov <contact@pelfox.dev>",
+  "license": "MIT",
   "main": "dist/index.js",
   "scripts": {
     "lint": "eslint . --ext .ts,.js",
